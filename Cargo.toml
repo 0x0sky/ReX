@@ -26,5 +26,8 @@ env_logger = "*"
 version="0.3"
 features = [ "release_max_level_warn" ]
 
+[patch.crates-io]
+static_map_macros = { path = "compat/static_map_macros" }
+
 [[bin]]	
 name = "rex"
