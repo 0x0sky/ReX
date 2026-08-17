@@ -12,7 +12,7 @@ use Value;
 const MIN_TABLE_SIZE: usize = 16;
 
 pub struct Builder<'a> {
-    pub hashes: Vec<usize>,
+    pub hashes: Vec<u32>,
     pub entries: Vec<Option<(Key<'a>, Value<'a>)>>,
 }
 
@@ -41,7 +41,7 @@ impl<'a> Builder<'a> {
         let mut hash = hash(&key);
         let mut entry = (key, value);
 
-        let mut pos = hash & mask;
+        let mut pos = hash as usize & mask;
         let mut dist = 0;
 
         loop {
@@ -49,18 +49,18 @@ impl<'a> Builder<'a> {
                 panic!("staticmap! fatal error -- unable to find emptry bucket for key");
             }
 
-            let probe_hash = &mut self.hashes[pos];
+            let probe_hash = &mut self.hashes[pos as usize];
 
             if *probe_hash == 0 {
-                *probe_hash = hash;
-                self.entries[pos] = Some(entry);
+                *probe_hash = hash as u32;
+                self.entries[pos as usize] = Some(entry);
                 return;
             }
 
-            let probe_dist = pos.wrapping_sub(*probe_hash) & mask;
+            let probe_dist = pos.wrapping_sub(*probe_hash as usize) & mask;
 
             if probe_dist < dist {
-                let probe_entry = self.entries[pos].as_mut().unwrap();
+                let probe_entry = self.entries[pos as usize].as_mut().unwrap();
                 mem::swap(probe_entry, &mut entry);
                 mem::swap(probe_hash, &mut hash);
                 dist = probe_dist;
@@ -89,7 +89,7 @@ impl<'a> Builder<'a> {
     }
 }
 
-fn hash(key: &syn::Lit) -> usize {
+fn hash(key: &syn::Lit) -> u32 {
     use syn::Lit;
     let hash = match *key {
         Lit::Str(ref s, _) => _hash(s),
@@ -107,8 +107,8 @@ fn hash(key: &syn::Lit) -> usize {
 }
 
 use std::hash::Hash;
-fn _hash<Q: ?Sized>(key: &Q) -> usize
+fn _hash<Q: ?Sized>(key: &Q) -> u32
     where Q: Hash + Eq
 {
-    fxhash::hash(key) as usize | 1
+    fxhash::hash64(key) as u32 | 1
 }
