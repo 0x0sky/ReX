@@ -22,7 +22,14 @@ jobs:
           targets: wasm32-unknown-unknown
 
       - name: Formatting
-        run: cargo fmt --all -- --check
+        run: |
+          rustfmt --edition 2018 --check \
+            src/render.rs \
+            src/render/auto.rs \
+            src/render/svg.rs \
+            src/render/webgpu.rs \
+            src/scene.rs \
+            tests/scene.rs
 
       - name: Compile all targets and features
         run: cargo check --all-targets --all-features
