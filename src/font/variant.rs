@@ -75,7 +75,7 @@ impl Variant for Glyph {
         // We want the largest variant that is _smaller_ than the given size.
         for idx in 0..variants.replacements.len() {
             if variants.replacements[idx].advance >= size {
-                if idx <= 0 {
+                if idx == 0 {
                     trace!("replacement glyphs are too large");
                     return VariantGlyph::Replacement(*self);
                 } else {
