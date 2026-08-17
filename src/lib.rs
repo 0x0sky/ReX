@@ -10,6 +10,7 @@ extern crate font_types;
 
 #[macro_use]
 extern crate static_map;
+extern crate static_map as phf;
 
 #[macro_use]
 mod macros;
