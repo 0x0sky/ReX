@@ -8,6 +8,10 @@ authors = [
 edition = "2018"
 rust-version = "1.87"
 
+[workspace]
+members = ["web"]
+resolver = "2"
+
 [features]
 default = ["webgpu"]
 webgpu = ["dep:bytemuck", "dep:fontdue", "dep:futures-channel", "dep:wgpu"]

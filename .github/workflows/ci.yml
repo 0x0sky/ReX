@@ -11,7 +11,8 @@ permissions:
   contents: read
 
 jobs:
-  full-ci:
+  core:
+    name: Core
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -36,17 +37,47 @@ jobs:
         run: |
           test "$(git hash-object rex-xits.otf)" = "386d595c9eee71a85bc95e52fa76377dbb741843"
 
-      - name: Compile all targets and features
-        run: cargo check --all-targets --all-features
+      - name: Compile all core targets and features
+        run: cargo check -p rex --all-targets --all-features
 
       - name: Clippy
-        run: cargo clippy --all-targets --all-features
+        run: cargo clippy -p rex --all-targets --all-features
 
       - name: Tests
-        run: cargo test --all-features
+        run: cargo test -p rex --all-features
 
       - name: SVG-only fallback tests
-        run: cargo test --no-default-features
+        run: cargo test -p rex --no-default-features
 
       - name: WebAssembly compile
-        run: cargo check --target wasm32-unknown-unknown --all-features
+        run: cargo check -p rex --target wasm32-unknown-unknown --all-features
+
+  web-demo:
+    name: Web demo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: dtolnay/rust-toolchain@1.87
+        with:
+          components: rustfmt, clippy
+          targets: wasm32-unknown-unknown
+
+      - name: Web adapter formatting
+        run: rustfmt --edition 2018 --check web/src/application.rs web/src/infrastructure.rs web/src/lib.rs
+
+      - name: Web adapter Clippy
+        run: cargo clippy -p rex-web --all-targets
+
+      - name: Web adapter tests
+        run: cargo test -p rex-web
+
+      - name: Web adapter browser compile
+        run: cargo check -p rex-web --target wasm32-unknown-unknown
+
+      - name: JavaScript modules
+        run: |
+          node --check demo/app.js
+          node --check demo/controller.js
+          node --check demo/renderer.js
+          node --check demo/view.js

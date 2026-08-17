@@ -1,0 +1,45 @@
+name: Validate for deploy
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pages:
+    name: GitHub Pages artifact
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack --version 0.15.0 --locked
+
+      - name: Build Pages artifact
+        run: |
+          bash scripts/build-pages.sh "$RUNNER_TEMP/rex-site"
+          git rev-parse 'HEAD^{tree}' > "$RUNNER_TEMP/rex-site/.rex-source-tree"
+
+      - name: Validate artifact contract
+        run: |
+          test -s "$RUNNER_TEMP/rex-site/index.html"
+          test -s "$RUNNER_TEMP/rex-site/styles.css"
+          test -s "$RUNNER_TEMP/rex-site/app.js"
+          test -s "$RUNNER_TEMP/rex-site/controller.js"
+          test -s "$RUNNER_TEMP/rex-site/renderer.js"
+          test -s "$RUNNER_TEMP/rex-site/view.js"
+          test -s "$RUNNER_TEMP/rex-site/rex-xits.woff2"
+          test -s "$RUNNER_TEMP/rex-site/pkg/rex_web.js"
+          test -s "$RUNNER_TEMP/rex-site/pkg/rex_web_bg.wasm"
+          test -s "$RUNNER_TEMP/rex-site/.rex-source-tree"
+
+      - name: Preserve validated site
+        uses: actions/upload-artifact@v7
+        with:
+          name: rex-pages-site
+          path: ${{ runner.temp }}/rex-site
+          include-hidden-files: true
+          if-no-files-found: error

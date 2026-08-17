@@ -1,0 +1,68 @@
+name: Deploy GitHub Pages
+
+on:
+  workflow_dispatch:
+    inputs:
+      validation_run_id:
+        description: Workflow run ID from a successful Validate for deploy run
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Prepare validated artifact
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      pages: write
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v7
+        with:
+          ref: master
+
+      - name: Download validated site
+        uses: actions/download-artifact@v8
+        with:
+          name: rex-pages-site
+          path: ${{ runner.temp }}/rex-site
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ inputs.validation_run_id }}
+
+      - name: Verify artifact provenance
+        run: |
+          test -s "$RUNNER_TEMP/rex-site/.rex-source-tree"
+          current_tree="$(git rev-parse 'HEAD^{tree}')"
+          validated_tree="$(cat "$RUNNER_TEMP/rex-site/.rex-source-tree")"
+          test "$current_tree" = "$validated_tree"
+          rm "$RUNNER_TEMP/rex-site/.rex-source-tree"
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: ${{ runner.temp }}/rex-site
+
+  deploy:
+    name: Deploy
+    needs: prepare
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy artifact
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,196 @@
+:root {
+  color-scheme: light dark;
+  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #0b0b0d;
+  color: #f2f2f3;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 15% 0%, rgba(255, 255, 255, 0.07), transparent 34rem),
+    #0b0b0d;
+}
+
+button,
+textarea {
+  font: inherit;
+}
+
+.shell {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 48px 0 28px;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.eyebrow,
+label,
+.message,
+footer,
+.source-link {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #96969f;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(48px, 8vw, 92px);
+  line-height: 0.9;
+  letter-spacing: -0.06em;
+}
+
+.subtitle {
+  max-width: 520px;
+  margin: 18px 0 0;
+  color: #b7b7bf;
+  font-size: clamp(16px, 2vw, 20px);
+  line-height: 1.5;
+}
+
+.source-link {
+  color: #d7d7dc;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.source-link:hover {
+  color: #ffffff;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  min-height: 520px;
+  overflow: hidden;
+  border: 1px solid #29292f;
+  border-radius: 18px;
+  background: rgba(17, 17, 20, 0.88);
+}
+
+.editor-panel,
+.preview-panel {
+  min-width: 0;
+}
+
+.editor-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 22px;
+  border-right: 1px solid #29292f;
+}
+
+label {
+  color: #8d8d96;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+textarea {
+  flex: 1;
+  width: 100%;
+  min-height: 320px;
+  resize: none;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #f4f4f5;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.preview-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 360px;
+  padding: 32px;
+  background: #f7f6f2;
+  color: #111114;
+}
+
+.preview {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 240px;
+  overflow: auto;
+}
+
+.preview svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.message {
+  position: absolute;
+  right: 18px;
+  bottom: 14px;
+  margin: 0;
+  color: #707078;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
+.message[data-state="error"] {
+  color: #a02020;
+}
+
+footer {
+  margin-top: 18px;
+  color: #72727b;
+  font-size: 11px;
+}
+
+@media (max-width: 760px) {
+  .shell {
+    width: min(100% - 20px, 640px);
+    padding-top: 28px;
+  }
+
+  .header {
+    margin-bottom: 22px;
+  }
+
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .editor-panel {
+    border-right: 0;
+    border-bottom: 1px solid #29292f;
+  }
+
+  textarea {
+    min-height: 220px;
+  }
+
+  .preview-panel {
+    min-height: 320px;
+    padding: 20px;
+  }
+}
