@@ -28,6 +28,8 @@ wgpu = { version = "29", optional = true }
 serde_yaml = "0.7"
 bincode = "0.8"
 env_logger = "*"
+png = "0.18.1"
+pollster = "0.4"
 
 [dependencies.log]
 version = "0.3"
