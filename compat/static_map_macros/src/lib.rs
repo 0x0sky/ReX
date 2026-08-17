@@ -1,183 +1,164 @@
-// Compatibility shim for static_map_macros 0.2.0-beta.
-//
-// Upstream relied on the exact whitespace emitted by TokenStream::to_string()
-// for the derive input. Modern rustc changed that formatting. The map builder
-// itself remains unchanged; only extraction of the static_map! payload is made
-// independent of rustc whitespace formatting.
-
-extern crate fxhash;
-extern crate proc_macro;
-#[macro_use]
-extern crate quote;
-extern crate syn;
-
+use phf_generator::HashState;
+use phf_shared::PhfHash;
 use proc_macro::TokenStream;
+use proc_macro2::TokenStream as TokenStream2;
+use quote::{quote, ToTokens};
+use std::collections::HashSet;
+use std::hash::Hasher;
+use syn::parse::{Parse, ParseStream};
+use syn::{parse_macro_input, Error, Expr, ExprLit, Lit, LitInt, Result, Token};
 
-mod builder;
-use builder::Builder;
-
-type Key<'a> = syn::Lit;
-type Value<'a> = &'a str;
-
-fn trim(input: &str) -> &str {
-    const MACRO: &str = "static_map!";
-
-    let macro_start = input
-        .find(MACRO)
-        .expect("static_map! invocation missing from derive input");
-    let after_macro = macro_start + MACRO.len();
-    let open = input[after_macro..]
-        .find('(')
-        .map(|offset| after_macro + offset)
-        .expect("static_map! invocation has no opening delimiter");
-
-    let close = matching_paren(input, open)
-        .expect("static_map! invocation has no closing delimiter");
-    let body = input[open + 1..close].trim_start();
-
-    assert!(body.starts_with('@'), "static_map! compatibility marker missing");
-    let body = body[1..].trim_start();
-    assert!(body.starts_with("zero"), "static_map! zero marker missing");
-
-    body["zero".len()..].trim()
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+enum ParsedKey {
+    Str(String),
+    U32(u32),
+    Char(char),
+    Bool(bool),
 }
 
-fn matching_paren(input: &str, open: usize) -> Option<usize> {
-    let mut depth = 0usize;
-    let mut in_string = false;
-    let mut in_char = false;
-    let mut escaped = false;
-
-    for (offset, ch) in input[open..].char_indices() {
-        if escaped {
-            escaped = false;
-            continue;
+impl PhfHash for ParsedKey {
+    fn phf_hash<H: Hasher>(&self, state: &mut H) {
+        match self {
+            ParsedKey::Str(value) => value.phf_hash(state),
+            ParsedKey::U32(value) => value.phf_hash(state),
+            ParsedKey::Char(value) => value.phf_hash(state),
+            ParsedKey::Bool(value) => value.phf_hash(state),
         }
+    }
+}
 
-        if in_string {
-            match ch {
-                '\\' => escaped = true,
-                '"' => in_string = false,
-                _ => {}
-            }
-            continue;
-        }
+struct Key {
+    parsed: ParsedKey,
+    tokens: TokenStream2,
+}
 
-        if in_char {
-            match ch {
-                '\\' => escaped = true,
-                '\'' => in_char = false,
-                _ => {}
-            }
-            continue;
-        }
-
-        match ch {
-            '"' => in_string = true,
-            '\'' => in_char = true,
-            '(' => depth += 1,
-            ')' => {
-                depth -= 1;
-                if depth == 0 {
-                    return Some(open + offset);
+impl Key {
+    fn from_expr(expr: Expr) -> Result<Self> {
+        match expr {
+            Expr::Group(group) => Self::from_expr(*group.expr),
+            Expr::Paren(paren) => Self::from_expr(*paren.expr),
+            Expr::Lit(ExprLit {
+                lit: Lit::Str(value),
+                ..
+            }) => Ok(Key {
+                parsed: ParsedKey::Str(value.value()),
+                tokens: value.to_token_stream(),
+            }),
+            Expr::Lit(ExprLit {
+                lit: Lit::Int(value),
+                ..
+            }) => {
+                let suffix = value.suffix();
+                if !suffix.is_empty() && suffix != "u32" {
+                    return Err(Error::new_spanned(
+                        value,
+                        "ReX static_map compatibility supports only u32 integer keys",
+                    ));
                 }
+
+                let parsed = value.base10_parse::<u32>()?;
+                let typed = LitInt::new(&format!("{}u32", parsed), value.span());
+                Ok(Key {
+                    parsed: ParsedKey::U32(parsed),
+                    tokens: typed.to_token_stream(),
+                })
             }
-            _ => {}
+            Expr::Lit(ExprLit {
+                lit: Lit::Char(value),
+                ..
+            }) => Ok(Key {
+                parsed: ParsedKey::Char(value.value()),
+                tokens: value.to_token_stream(),
+            }),
+            Expr::Lit(ExprLit {
+                lit: Lit::Bool(value),
+                ..
+            }) => Ok(Key {
+                parsed: ParsedKey::Bool(value.value),
+                tokens: value.to_token_stream(),
+            }),
+            other => Err(Error::new_spanned(
+                other,
+                "unsupported ReX static_map key expression",
+            )),
         }
     }
-
-    None
 }
 
-#[proc_macro_derive(StaticMapMacro)]
-pub fn static_map_macro(input: TokenStream) -> TokenStream {
-    let input = input.to_string();
-    let result = build_static_map(trim(&input));
-
-    let wrapper = quote! {
-        macro_rules! __static_map__construct_map {
-            () => ( #result )
-        }
-    };
-
-    wrapper.parse().unwrap()
-}
-
-fn build_static_map(input: &str) -> quote::Tokens {
-    // Keep the original 0.2.0-beta payload format and builder semantics intact.
-    let mut tokens = input.split('@');
-    let default_value = tokens.next().unwrap();
-
-    let count = input.chars().filter(|&c| c == '@').count();
-    let mut builder = Builder::with_capacity(count);
-
-    let mut pair = tokens
-        .next()
-        .expect("staticmap! requires at least one key/value pair")
-        .split('?');
-
-    let default_key = syn::parse::lit(pair.next().unwrap()).expect("failed to parse key type");
-    let value = pair.next().unwrap();
-    builder.insert(default_key.clone(), value);
-
-    for pair in tokens {
-        let mut pair = pair.split('?');
-        let key = syn::parse::lit(pair.next().unwrap()).expect("failed to parse key type");
-        let value = pair.next().unwrap();
-        builder.insert(key, value);
+impl PhfHash for Key {
+    fn phf_hash<H: Hasher>(&self, state: &mut H) {
+        self.parsed.phf_hash(state);
     }
-
-    builder.build(lit_default(&default_key), default_value)
 }
 
-fn lit_default(lit: &syn::Lit) -> syn::Lit {
-    use syn::Lit::*;
-    use syn::Lit;
+struct Entry {
+    key: Key,
+    value: Expr,
+}
 
-    match *lit {
-        Str(_, _) => Lit::from(""),
-        Byte(_) => Lit::from(0u8),
-        Char(_) => Lit::from(0 as char),
-        Int(_, ty) => {
-            use syn::IntTy::*;
-            use syn::IntTy;
-            match ty {
-                Isize => Lit::from(0isize),
-                I8 => Lit::from(0i8),
-                I16 => Lit::from(0i16),
-                I32 => Lit::from(0i32),
-                I64 => Lit::from(0i64),
-                Usize => Lit::from(0usize),
-                U8 => Lit::from(0u8),
-                U16 => Lit::from(0u16),
-                U32 => Lit::from(0u32),
-                U64 => Lit::from(0u64),
-                Unsuffixed => Lit::Int(0, IntTy::Unsuffixed),
+impl Parse for Entry {
+    fn parse(input: ParseStream<'_>) -> Result<Self> {
+        let key = Key::from_expr(input.parse()?)?;
+        input.parse::<Token![=>]>()?;
+        let value = input.parse()?;
+        Ok(Entry { key, value })
+    }
+}
+
+impl PhfHash for Entry {
+    fn phf_hash<H: Hasher>(&self, state: &mut H) {
+        self.key.phf_hash(state);
+    }
+}
+
+struct Entries(Vec<Entry>);
+
+impl Parse for Entries {
+    fn parse(input: ParseStream<'_>) -> Result<Self> {
+        let mut entries: Vec<Entry> = Vec::new();
+        while !input.is_empty() {
+            entries.push(input.parse()?);
+            if input.is_empty() {
+                break;
+            }
+            input.parse::<Token![,]>()?;
+        }
+
+        let mut unique = HashSet::new();
+        for entry in &entries {
+            if !unique.insert(entry.key.parsed.clone()) {
+                return Err(Error::new_spanned(
+                    entry.key.tokens.clone(),
+                    "duplicate static_map key",
+                ));
             }
         }
-        ref lit => panic!("staticmap! unsupported key type `{:?}`", lit),
+
+        Ok(Entries(entries))
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::trim;
+#[proc_macro]
+pub fn static_map_phf(input: TokenStream) -> TokenStream {
+    let Entries(entries) = parse_macro_input!(input as Entries);
+    let state = phf_generator::generate_hash(&entries);
+    build_map(&entries, state).into()
+}
 
-    #[test]
-    fn accepts_legacy_rustc_formatting() {
-        let input = "enum __StaticMap__ {\n    A =\n        static_map!(@ zero DefaultValue @ 1u32 ? Value(2)),\n}";
-        assert_eq!(trim(input), "DefaultValue @ 1u32 ? Value(2)");
-    }
+fn build_map(entries: &[Entry], state: HashState) -> TokenStream2 {
+    let hash_key = state.key;
+    let disps = state.disps.iter().map(|&(d1, d2)| quote!((#d1, #d2)));
+    let ordered_entries = state.map.iter().map(|&index| {
+        let key = &entries[index].key.tokens;
+        let value = &entries[index].value;
+        quote!((#key, #value))
+    });
 
-    #[test]
-    fn accepts_modern_compact_formatting() {
-        let input = "enum __StaticMap__ { A = static_map! (@ zero DefaultValue @ 1u32 ? Value(2)), }";
-        assert_eq!(trim(input), "DefaultValue @ 1u32 ? Value(2)");
-    }
-
-    #[test]
-    fn ignores_parentheses_inside_string_literals() {
-        let input = "enum __StaticMap__ { A = static_map!(@zero DefaultValue @ \"(\" ? Value(2)), }";
-        assert_eq!(trim(input), "DefaultValue @ \"(\" ? Value(2)");
+    quote! {
+        ::static_map::Map {
+            key: #hash_key,
+            disps: &[#(#disps),*],
+            entries: &[#(#ordered_entries),*],
+        }
     }
 }

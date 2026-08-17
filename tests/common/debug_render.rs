@@ -5,7 +5,8 @@
 
 use font::FontUnit;
 use rex::parser::color::RGBA;
-use rex::render::{Renderer, RenderSettings, Cursor};
+use rex::render::{RenderSettings, Renderer, SceneRenderer};
+use rex::scene::{Color, MathScene, SceneNode};
 use std::cell::Cell;
 
 type Objects = Vec<Object>;
@@ -53,41 +54,50 @@ pub struct DebugRenderer {
     pub height: Cell<FontUnit>,
 }
 
-impl Renderer for DebugRenderer {
+impl DebugRenderer {
+    fn render_nodes(out: &mut Objects, nodes: &[SceneNode]) {
+        for node in nodes {
+            match *node {
+                SceneNode::Glyph(ref glyph) => out.push(Object::Symbol(DebugSymbol {
+                    codepoint: glyph.unicode,
+                    scale: glyph.scale,
+                    x: glyph.position.x,
+                    y: glyph.position.y,
+                })),
+                SceneNode::Rule(ref rule) => out.push(Object::Rule(DebugRule {
+                    width: rule.width,
+                    height: rule.height,
+                    x: rule.position.x,
+                    y: rule.position.y,
+                })),
+                SceneNode::Color(ref color) => {
+                    let mut inner = Objects::default();
+                    Self::render_nodes(&mut inner, &color.contents);
+                    out.push(Object::Color(to_rgba(color.color), inner));
+                }
+                SceneNode::DebugBox(_) => {}
+            }
+        }
+    }
+}
+
+fn to_rgba(color: Color) -> RGBA {
+    RGBA(color.red, color.green, color.blue, color.alpha)
+}
+
+impl SceneRenderer for DebugRenderer {
     type Out = Objects;
 
+    fn render_scene_to(&self, out: &mut Objects, scene: &MathScene) -> Result<(), rex::error::Error> {
+        self.width.set(scene.width);
+        self.height.set(scene.height);
+        Self::render_nodes(out, &scene.nodes);
+        Ok(())
+    }
+}
+
+impl Renderer for DebugRenderer {
     fn settings(&self) -> &RenderSettings {
         &self.settings
-    }
-
-    fn prepare(&self, _: &mut Objects, width: FontUnit, height: FontUnit) {
-        self.width.set(width);
-        self.height.set(height);
-    }
-
-    fn symbol(&self, out: &mut Objects, pos: Cursor, symbol: u32, scale: f64) {
-        out.push(Object::Symbol(DebugSymbol {
-                                    codepoint: symbol,
-                                    scale: scale,
-                                    x: pos.x,
-                                    y: pos.y,
-                                }));
-    }
-
-    fn rule(&self, out: &mut Objects, pos: Cursor, width: FontUnit, height: FontUnit) {
-        out.push(Object::Rule(DebugRule {
-                                  width: width,
-                                  height: height,
-                                  x: pos.x,
-                                  y: pos.y,
-                              }));
-    }
-
-    fn color<F>(&self, out: &mut Objects, color: RGBA, mut contents: F)
-        where F: FnMut(&Self, &mut Objects)
-    {
-        let mut inner = Objects::default();
-        contents(self, &mut inner);
-        out.push(Object::Color(color, inner));
     }
 }

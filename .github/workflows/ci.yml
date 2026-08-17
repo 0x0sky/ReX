@@ -5,30 +5,48 @@ on:
   push:
     branches:
       - master
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  native:
-    name: Native
+  full-ci:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7
+      - uses: actions/checkout@v7
 
-      - name: Test
-        run: cargo test --all
+      - uses: dtolnay/rust-toolchain@1.87
+        with:
+          components: rustfmt, clippy
+          targets: wasm32-unknown-unknown
 
-  wasm:
-    name: WASM
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
+      - name: Formatting
+        run: |
+          rustfmt --edition 2018 --check \
+            examples/visual_smoke.rs \
+            src/render.rs \
+            src/render/auto.rs \
+            src/render/svg.rs \
+            src/render/webgpu.rs \
+            src/scene.rs \
+            tests/scene.rs
 
-      - name: Add wasm target
-        run: rustup target add wasm32-unknown-unknown
+      - name: ReX font provenance
+        run: |
+          test "$(git hash-object rex-xits.otf)" = "386d595c9eee71a85bc95e52fa76377dbb741843"
 
-      - name: Check library for browser target
-        run: cargo check --lib --target wasm32-unknown-unknown
+      - name: Compile all targets and features
+        run: cargo check --all-targets --all-features
+
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features
+
+      - name: Tests
+        run: cargo test --all-features
+
+      - name: SVG-only fallback tests
+        run: cargo test --no-default-features
+
+      - name: WebAssembly compile
+        run: cargo check --target wasm32-unknown-unknown --all-features

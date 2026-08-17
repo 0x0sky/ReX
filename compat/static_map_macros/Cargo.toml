@@ -1,16 +1,16 @@
 [package]
 name = "static_map_macros"
-version = "0.2.0-beta"
-authors = ["Christopher Breeden <github@u.breeden.cc>"]
-description = "Compatibility-patched procedural macro for legacy static_map tables."
-license = "MIT OR Apache-2.0"
-repository = "https://github.com/cbreeden/static-map"
+version = "0.2.0-rex"
+edition = "2018"
+rust-version = "1.87"
 publish = false
 
 [lib]
 proc-macro = true
 
 [dependencies]
-fxhash = "0.2.1"
-syn = "0.11"
-quote = "0.3"
+phf_generator = "0.11.3"
+phf_shared = "0.11.3"
+proc-macro2 = "1"
+quote = "1"
+syn = { version = "2", features = ["full"] }

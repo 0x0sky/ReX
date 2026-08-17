@@ -93,6 +93,28 @@ cargo run 'x = \frac{-b \pm \sqrt{b^2 - 4ac}{2a}'
 
 for a standalone SVG.  The file will be saved as "test.svg".
 
+# Visual smoke test
+
+The WebGPU branch includes a native visual smoke harness that renders the same `MathScene` through WebGPU and the existing SVG renderer:
+
+```
+cargo run --example visual_smoke
+```
+
+Outputs are written to `smoke-output/`:
+
+- `smoke.svg` — direct SVG reference;
+- `smoke.webgpu.png` — direct WebGPU output when a GPU adapter is available;
+- `smoke.auto.png` or `smoke.auto.svg` — `AutoRenderer` output, showing whether WebGPU succeeded or SVG fallback was used.
+
+A custom formula and output directory can be supplied as arguments:
+
+```
+cargo run --example visual_smoke -- "x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}" tmp/rex-smoke
+```
+
+The branch pins `rex-xits.otf` to the rexified STIX2 artifact produced by [`ReTeX/rex-fonts`](https://github.com/ReTeX/rex-fonts), `out/stix2/rex-stix2.otf` (Git blob `386d595c9eee71a85bc95e52fa76377dbb741843`). CI verifies that blob identity so SVG and WebGPU smoke output use the same ReX-prepared font artifact.
+
 # License
 
 ReX is primarily distributed under the terms of both the MIT license and

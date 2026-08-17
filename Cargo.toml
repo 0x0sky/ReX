@@ -5,29 +5,35 @@ authors = [
     "Christopher Breeden <github@u.breeden.cc>",
     "Sebastian Köln <sebk@rynx.org>"
 ]
-edition = '2018'
+edition = "2018"
+rust-version = "1.87"
 
+[features]
+default = ["webgpu"]
+webgpu = ["dep:bytemuck", "dep:fontdue", "dep:futures-channel", "dep:wgpu"]
 
 [dependencies]
 stix2 = { path = "fonts/stix2" }
-font_types = {path = "fonts/types" }
-static_map = "0.2.0-beta"
-static_map_macros = "0.2.0-beta"
+font_types = { path = "fonts/types" }
+static_map = { path = "compat/static_map" }
 serde_derive = "1.0"
 serde = "1.0"
 env_logger = "0.7"
+bytemuck = { version = "1", features = ["derive"], optional = true }
+fontdue = { version = "0.9.4", optional = true }
+futures-channel = { version = "0.3", optional = true }
+wgpu = { version = "29", optional = true }
 
 [dev-dependencies]
 serde_yaml = "0.7"
 bincode = "0.8"
 env_logger = "*"
+png = "0.18.1"
+pollster = "0.4"
 
 [dependencies.log]
-version="0.3"
-features = [ "release_max_level_warn" ]
+version = "0.3"
+features = ["release_max_level_warn"]
 
-[patch.crates-io]
-static_map_macros = { path = "compat/static_map_macros" }
-
-[[bin]]	
+[[bin]]
 name = "rex"
