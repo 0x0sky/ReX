@@ -1,0 +1,9 @@
+[package]
+name = "static_map"
+version = "0.2.0-rex"
+edition = "2018"
+rust-version = "1.87"
+publish = false
+
+[dependencies]
+phf = { version = "0.11.3", features = ["macros"] }
