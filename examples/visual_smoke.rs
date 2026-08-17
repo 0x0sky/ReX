@@ -11,8 +11,7 @@ use std::io::BufWriter;
 use std::path::{Path, PathBuf};
 
 const DEFAULT_FORMULA: &str = r"x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}";
-const REX_FONTS_SOURCE: &str =
-    "ReTeX/rex-fonts: out/stix2/rex-stix2.otf";
+const REX_FONTS_SOURCE: &str = "ReTeX/rex-fonts: out/stix2/rex-stix2.otf";
 const REX_FONTS_BLOB_SHA: &str = "386d595c9eee71a85bc95e52fa76377dbb741843";
 
 fn main() {
@@ -32,8 +31,8 @@ fn main() {
         .typeset(formula)
         .expect("failed to typeset smoke formula");
 
-    let svg_output = svg::render_scene_to_string(&settings, &scene)
-        .expect("failed to render SVG smoke output");
+    let svg_output =
+        svg::render_scene_to_string(&settings, &scene).expect("failed to render SVG smoke output");
     write_text(out_dir.join("smoke.svg"), &svg_output);
 
     #[cfg(feature = "webgpu")]
