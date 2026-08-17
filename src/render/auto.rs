@@ -113,4 +113,45 @@ mod tests {
             RenderedMath::WebGpu(_) => panic!("expected SVG fallback"),
         }
     }
+
+    #[cfg(not(feature = "webgpu"))]
+    #[test]
+    fn auto_renderer_uses_svg_when_webgpu_is_disabled() {
+        use std::future::Future;
+        use std::sync::Arc;
+        use std::task::{Context, Poll, Wake, Waker};
+
+        struct NoopWake;
+
+        impl Wake for NoopWake {
+            fn wake(self: Arc<Self>) {}
+        }
+
+        fn poll_ready<F: Future>(future: F) -> F::Output {
+            let waker = Waker::from(Arc::new(NoopWake));
+            let mut context = Context::from_waker(&waker);
+            let mut future = Box::pin(future);
+
+            match future.as_mut().poll(&mut context) {
+                Poll::Ready(output) => output,
+                Poll::Pending => panic!("SVG-only AutoRenderer unexpectedly yielded"),
+            }
+        }
+
+        let settings = RenderSettings::default().font_src("rex-xits.otf");
+        let renderer = AutoRenderer::new(&settings);
+        let result = poll_ready(renderer.render("x")).unwrap();
+
+        assert_eq!(result.backend, RenderBackend::Svg);
+        assert_eq!(
+            result.fallback_reason,
+            Some(FallbackReason::WebGpuFeatureDisabled)
+        );
+        match result.output {
+            RenderedMath::Svg(svg) => {
+                assert!(svg.contains("<svg"));
+                assert!(svg.contains("<text"));
+            }
+        }
+    }
 }
