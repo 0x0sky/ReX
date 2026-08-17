@@ -7,3 +7,4 @@ publish = false
 
 [dependencies]
 phf = { version = "0.11.3", features = ["macros"] }
+static_map_macros = { path = "../static_map_macros" }
