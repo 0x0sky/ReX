@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="ReX — mathematics typesetting in the browser with Rust and WebAssembly." />
+    <title>ReX · Mathematics Typesetting</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="header">
+        <div>
+          <p class="eyebrow">Rust · WebAssembly · SVG</p>
+          <h1>ReX</h1>
+          <p class="subtitle">Typesetting mathematics directly in your browser.</p>
+        </div>
+        <a class="source-link" href="https://github.com/0x0sky/ReX" rel="noreferrer">source ↗</a>
+      </header>
+
+      <section class="workspace" aria-label="ReX live demo">
+        <div class="editor-panel">
+          <label for="source">TeX input</label>
+          <textarea id="source" data-source spellcheck="false">\frac{1}{\pi} = \frac{2\sqrt{2}}{9801} \sum_{k=0}^\infty \frac{(4k)!(1103+26390k)}{(k!)^4 396^{4k}}</textarea>
+        </div>
+
+        <div class="preview-panel">
+          <div class="preview" data-preview aria-live="polite"></div>
+          <p class="message" data-message data-state="busy">loading ReX…</p>
+        </div>
+      </section>
+
+      <footer>
+        ReX core stays renderer-agnostic. The browser is only an adapter.
+      </footer>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
