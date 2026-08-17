@@ -57,7 +57,7 @@ fn normalize_key(key: &Expr) -> proc_macro2::TokenStream {
             let value = integer
                 .base10_parse::<u32>()
                 .expect("ReX static_map compatibility only supports u32 integer keys");
-            let typed = LitInt::new(&format!("{}_u32", value), integer.span());
+            let typed = LitInt::new(&format!("{}u32", value), integer.span());
             return quote!(#typed);
         }
     }
