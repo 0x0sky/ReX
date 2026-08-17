@@ -19,7 +19,9 @@ jobs:
         run: cargo install wasm-pack --version 0.15.0 --locked
 
       - name: Build Pages artifact
-        run: bash scripts/build-pages.sh "$RUNNER_TEMP/rex-site"
+        run: |
+          bash scripts/build-pages.sh "$RUNNER_TEMP/rex-site"
+          git rev-parse 'HEAD^{tree}' > "$RUNNER_TEMP/rex-site/.rex-source-tree"
 
       - name: Validate artifact contract
         run: |
@@ -32,3 +34,12 @@ jobs:
           test -s "$RUNNER_TEMP/rex-site/rex-xits.woff2"
           test -s "$RUNNER_TEMP/rex-site/pkg/rex_web.js"
           test -s "$RUNNER_TEMP/rex-site/pkg/rex_web_bg.wasm"
+          test -s "$RUNNER_TEMP/rex-site/.rex-source-tree"
+
+      - name: Preserve validated site
+        uses: actions/upload-artifact@v7
+        with:
+          name: rex-pages-site
+          path: ${{ runner.temp }}/rex-site
+          include-hidden-files: true
+          if-no-files-found: error
