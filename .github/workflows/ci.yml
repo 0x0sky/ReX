@@ -40,5 +40,8 @@ jobs:
       - name: Tests
         run: cargo test --all-features
 
+      - name: SVG-only fallback tests
+        run: cargo test --no-default-features
+
       - name: WebAssembly compile
         run: cargo check --target wasm32-unknown-unknown --all-features
