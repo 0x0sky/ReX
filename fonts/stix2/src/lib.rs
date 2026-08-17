@@ -1,7 +1,5 @@
 #[macro_use]
 extern crate static_map;
-#[macro_use]
-extern crate static_map_macros;
 extern crate font_types;
 
 #[macro_use]
