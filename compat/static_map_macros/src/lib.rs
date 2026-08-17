@@ -35,6 +35,8 @@ struct Key {
 impl Key {
     fn from_expr(expr: Expr) -> Result<Self> {
         match expr {
+            Expr::Group(group) => Self::from_expr(*group.expr),
+            Expr::Paren(paren) => Self::from_expr(*paren.expr),
             Expr::Lit(ExprLit {
                 lit: Lit::Str(value),
                 ..
