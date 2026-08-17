@@ -46,7 +46,7 @@ impl<'a> Builder<'a> {
 
         loop {
             if dist > self.entries.len() {
-                panic!("staticmap! fatal error -- unable to find empty bucket for key");
+                panic!("staticmap! fatal error -- unable to find emptry bucket for key");
             }
 
             let probe_hash = &mut self.hashes[pos];
@@ -76,9 +76,9 @@ impl<'a> Builder<'a> {
         let entries = self.entries
             .into_iter()
             .map(|opt| match opt {
-                Some(opt) => (opt.0, tok_lit!(opt.1)),
-                None => (default_key.clone(), tok_lit!(default_value)),
-            });
+                     Some(opt) => (opt.0, tok_lit!(opt.1)),
+                     None => (default_key.clone(), tok_lit!(default_value)),
+                 });
 
         quote! {
             static_map::Map {
@@ -91,20 +91,24 @@ impl<'a> Builder<'a> {
 
 fn hash(key: &syn::Lit) -> usize {
     use syn::Lit;
-    match *key {
-        Lit::Str(ref s, _) => hash_value(s),
-        Lit::ByteStr(ref v, _) => hash_value(v),
-        Lit::Byte(n) => hash_value(&n),
-        Lit::Char(c) => hash_value(&c),
-        Lit::Int(n, _) => hash_value(&n),
-        ref key => panic!("Unsupported key type: `{:?}`", key),
-    }
+    let hash = match *key {
+        Lit::Str(ref s, _) => _hash(s),
+        Lit::ByteStr(ref v, _) => _hash(v),
+        Lit::Byte(n) => _hash(&n),
+        Lit::Char(c) => _hash(&c),
+        Lit::Int(n, _) => _hash(&n),
+        ref k => {
+            let err = format!("Unsupported key type: `{:?}`", k);
+            panic!(err);
+        }
+    };
+
+    hash
 }
 
 use std::hash::Hash;
-fn hash_value<Q: ?Sized>(key: &Q) -> usize
-where
-    Q: Hash + Eq,
+fn _hash<Q: ?Sized>(key: &Q) -> usize
+    where Q: Hash + Eq
 {
     fxhash::hash(key) as usize | 1
 }
