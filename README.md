@@ -95,8 +95,15 @@ for a standalone SVG.  The file will be saved as "test.svg".
 
 # License
 
-ReX is primarily distributed under the terms of both the MIT license and
-the Apache License (Version 2.0), with portions covered by various BSD-like
-licenses.
+ReX is primarily distributed under the MIT License and the Apache License,
+Version 2.0, preserving the licensing declaration added by the original
+upstream maintainer in 2016.
 
-See LICENSE-APACHE, and LICENSE-MIT for details.
+See `LICENSE-MIT` and `LICENSE-APACHE` for the full license texts.
+
+This repository also contains separately licensed font assets and generated
+font data. See `THIRD_PARTY.md` and `LICENSES/` for their terms and attribution.
+
+The historical upstream notice also mentions portions covered by BSD-like
+licenses. Those portions are not identified in the current tree; this
+repository preserves that notice rather than silently relicensing them.
