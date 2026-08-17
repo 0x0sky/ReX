@@ -7,6 +7,8 @@ authors = [
 ]
 edition = '2018'
 
+[workspace]
+members = ["web"]
 
 [dependencies]
 stix2 = { path = "fonts/stix2" }
