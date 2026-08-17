@@ -52,8 +52,7 @@ impl<'a, W: Write> SVGRenderer<'a, W> {
     }
 
     fn prepare(&self, out: &mut W, width: FontUnit, height: FontUnit) {
-        let px_width =
-            f64::from(width) / f64::from(UNITS_PER_EM) * self.settings.font_size as f64;
+        let px_width = f64::from(width) / f64::from(UNITS_PER_EM) * self.settings.font_size as f64;
         let px_height =
             f64::from(height) / f64::from(UNITS_PER_EM) * self.settings.font_size as f64;
 
@@ -167,16 +166,10 @@ impl<'a, W: Write> SVGRenderer<'a, W> {
                 SceneNode::Glyph(ref glyph) => {
                     self.symbol(out, glyph.position, glyph.unicode, glyph.scale)
                 }
-                SceneNode::Rule(ref rule) => {
-                    self.rule(out, rule.position, rule.width, rule.height)
+                SceneNode::Rule(ref rule) => self.rule(out, rule.position, rule.width, rule.height),
+                SceneNode::DebugBox(ref debug) => {
+                    self.debug_box(out, debug.position, debug.width, debug.height, debug.kind)
                 }
-                SceneNode::DebugBox(ref debug) => self.debug_box(
-                    out,
-                    debug.position,
-                    debug.width,
-                    debug.height,
-                    debug.kind,
-                ),
                 SceneNode::Color(ref color) => {
                     self.begin_color(out, color.color);
                     self.render_nodes(out, &color.contents);
