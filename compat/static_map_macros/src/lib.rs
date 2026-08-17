@@ -113,7 +113,7 @@ struct Entries(Vec<Entry>);
 
 impl Parse for Entries {
     fn parse(input: ParseStream<'_>) -> Result<Self> {
-        let mut entries = Vec::new();
+        let mut entries: Vec<Entry> = Vec::new();
         while !input.is_empty() {
             entries.push(input.parse()?);
             if input.is_empty() {
