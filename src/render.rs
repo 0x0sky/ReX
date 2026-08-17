@@ -3,9 +3,7 @@ pub mod svg;
 #[cfg(feature = "webgpu")]
 pub mod webgpu;
 
-pub use self::auto::{
-    AutoRenderResult, AutoRenderer, FallbackReason, RenderBackend, RenderedMath,
-};
+pub use self::auto::{AutoRenderResult, AutoRenderer, FallbackReason, RenderBackend, RenderedMath};
 pub use self::svg::SVGRenderer;
 #[cfg(feature = "webgpu")]
 pub use self::webgpu::{WebGpuError, WebGpuImage, WebGpuRenderer};
@@ -74,10 +72,7 @@ impl RenderSettings {
     }
 
     pub fn style(self, style: Style) -> RenderSettings {
-        RenderSettings {
-            style,
-            ..self
-        }
+        RenderSettings { style, ..self }
     }
 
     pub fn debug(self, debug: bool) -> RenderSettings {
