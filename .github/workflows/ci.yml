@@ -17,8 +17,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Test
-        run: cargo test --all
+      - name: Test workspace
+        run: cargo test --workspace
 
   wasm:
     name: WASM
@@ -30,5 +30,22 @@ jobs:
       - name: Add wasm target
         run: rustup target add wasm32-unknown-unknown
 
-      - name: Check library for browser target
-        run: cargo check --lib --target wasm32-unknown-unknown
+      - name: Check web crate formatting
+        run: cargo fmt --manifest-path web/Cargo.toml -- --check
+
+      - name: Check core and web adapter for browser target
+        run: cargo check -p rex -p rex-web --target wasm32-unknown-unknown
+
+  demo-source:
+    name: Demo source
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Check JavaScript modules
+        run: |
+          node --check demo/app.js
+          node --check demo/controller.js
+          node --check demo/renderer.js
+          node --check demo/view.js
