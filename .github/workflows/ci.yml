@@ -17,6 +17,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      - name: Inspect legacy static map macro
+        run: |
+          cargo fetch
+          find "$HOME/.cargo/registry/src" -path '*/static_map_macros-0.1.1/src/lib.rs' -print -exec cat {} \;
+
       - name: Test
         run: cargo test --all
 
