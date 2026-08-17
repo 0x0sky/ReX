@@ -35,7 +35,7 @@ fn write_equations<W: Write>(f: &mut W, old: Equation, new: Equation) {
     let px_height = f64::from(height) / 1000.0 * 48.0;
 
     writeln!(f,
-             r#"<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+             r##"<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg width="{:2}" height="{:2}" viewBox="0 0 {} {}" xmlns="http://www.w3.org/2000/svg">
     <defs>
@@ -46,7 +46,7 @@ fn write_equations<W: Write>(f: &mut W, old: Equation, new: Equation) {
             .new   {{ fill: #EA312F }}
         </style>
     </defs>
-    <g font-family="rex" font-size="1000">"#,
+    <g font-family="rex" font-size="1000">"##,
              px_width,
              px_height,
              width,
@@ -111,9 +111,9 @@ pub fn write_diff<P: AsRef<Path>>(path: P, diff: Vec<(Equation, Equation)>) {
     let out = File::create(path.as_ref()).expect("failed to create html file for SVG diff");
     let mut writer = BufWriter::new(out);
 
-    writer.write(HEADER.as_bytes()).unwrap();
+    writer.write_all(HEADER.as_bytes()).unwrap();
     for (old, new) in diff {
         write_equations(&mut writer, old, new);
     }
-    writer.write(END.as_bytes()).unwrap();
+    writer.write_all(END.as_bytes()).unwrap();
 }
