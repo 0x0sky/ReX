@@ -17,15 +17,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Inspect legacy static map crates
-        run: |
-          cargo fetch
-          find "$HOME/.cargo/registry/src" \
-            \( -path '*/static_map_macros-0.1.1/Cargo.toml' \
-            -o -path '*/static_map_macros-0.1.1/src/*.rs' \
-            -o -path '*/static_map-0.1.1/src/*.rs' \) \
-            -print -exec cat {} \;
-
       - name: Test
         run: cargo test --all
 
