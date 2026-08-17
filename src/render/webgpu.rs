@@ -73,8 +73,7 @@ impl<'a> WebGpuRenderer<'a> {
     pub async fn render_scene(&self, scene: &MathScene) -> Result<WebGpuImage, WebGpuError> {
         let prepared = PreparedScene::new(scene, self.settings)?;
 
-        let instance =
-            wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle());
+        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle());
         let adapter = instance
             .request_adapter(&wgpu::RequestAdapterOptions {
                 power_preference: wgpu::PowerPreference::HighPerformance,
@@ -169,8 +168,7 @@ impl PreparedScene {
         )
         .map_err(|error| WebGpuError::Font(format!("{:?}", error)))?;
 
-        let pixels_per_font_unit =
-            settings.font_size as f32 / f64::from(UNITS_PER_EM) as f32;
+        let pixels_per_font_unit = settings.font_size as f32 / f64::from(UNITS_PER_EM) as f32;
         let width = (f64::from(scene.width) as f32 * pixels_per_font_unit)
             .ceil()
             .max(1.0) as u32;
@@ -263,8 +261,8 @@ fn collect_primitives(
     for node in nodes {
         match *node {
             SceneNode::Glyph(ref glyph) => {
-                let character =
-                    char::from_u32(glyph.unicode).ok_or(WebGpuError::InvalidGlyph(glyph.unicode))?;
+                let character = char::from_u32(glyph.unicode)
+                    .ok_or(WebGpuError::InvalidGlyph(glyph.unicode))?;
                 let size = (font_size * glyph.scale as f32).max(1.0);
                 let (metrics, bitmap) = font.rasterize(character, size);
                 let baseline_x = f64::from(glyph.position.x) as f32 * pixels_per_font_unit;
@@ -407,8 +405,7 @@ fn pack_atlas(primitives: &mut [Primitive]) -> Result<(u32, u32, Vec<u8>), WebGp
         for row in 0..glyph.height {
             let source_start = (row * glyph.width) as usize;
             let source_end = source_start + glyph.width as usize;
-            let destination_start =
-                ((glyph.atlas_y + row) * width + glyph.atlas_x) as usize;
+            let destination_start = ((glyph.atlas_y + row) * width + glyph.atlas_x) as usize;
             let destination_end = destination_start + glyph.width as usize;
             atlas[destination_start..destination_end]
                 .copy_from_slice(&glyph.bitmap[source_start..source_end]);
@@ -664,10 +661,7 @@ async fn render_prepared(
     };
 
     let unpadded_bytes_per_row = prepared.width * 4;
-    let padded_bytes_per_row = align_to(
-        unpadded_bytes_per_row,
-        wgpu::COPY_BYTES_PER_ROW_ALIGNMENT,
-    );
+    let padded_bytes_per_row = align_to(unpadded_bytes_per_row, wgpu::COPY_BYTES_PER_ROW_ALIGNMENT);
     let readback_size = padded_bytes_per_row as u64 * prepared.height as u64;
     let readback = device.create_buffer(&wgpu::BufferDescriptor {
         label: Some("ReX WebGPU readback"),
@@ -750,8 +744,7 @@ async fn render_prepared(
     map_result.map_err(|error| WebGpuError::BufferMap(format!("{:?}", error)))?;
 
     let mapped = slice.get_mapped_range();
-    let mut rgba =
-        Vec::with_capacity((unpadded_bytes_per_row * prepared.height) as usize);
+    let mut rgba = Vec::with_capacity((unpadded_bytes_per_row * prepared.height) as usize);
     for row in 0..prepared.height {
         let start = (row * padded_bytes_per_row) as usize;
         let end = start + unpadded_bytes_per_row as usize;
