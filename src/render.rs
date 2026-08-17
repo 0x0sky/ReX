@@ -1,10 +1,19 @@
+pub mod auto;
 pub mod svg;
+#[cfg(feature = "webgpu")]
+pub mod webgpu;
+
+pub use self::auto::{
+    AutoRenderResult, AutoRenderer, FallbackReason, RenderBackend, RenderedMath,
+};
 pub use self::svg::SVGRenderer;
+#[cfg(feature = "webgpu")]
+pub use self::webgpu::{WebGpuError, WebGpuImage, WebGpuRenderer};
 
 use crate::error::Error;
 use crate::font::FontUnit;
-use crate::layout::{Layout, LayoutSettings, Style};
 use crate::layout::engine::layout as build_layout;
+use crate::layout::{Layout, LayoutSettings, Style};
 use crate::parser::parse;
 use crate::scene::{LayoutSceneBuilder, MathScene, SceneBuilder, SceneSettings};
 
@@ -66,16 +75,13 @@ impl RenderSettings {
 
     pub fn style(self, style: Style) -> RenderSettings {
         RenderSettings {
-            style: style,
+            style,
             ..self
         }
     }
 
     pub fn debug(self, debug: bool) -> RenderSettings {
-        RenderSettings {
-            debug: debug,
-            ..self
-        }
+        RenderSettings { debug, ..self }
     }
 
     pub fn layout_settings(&self) -> LayoutSettings {
@@ -101,12 +107,12 @@ pub struct Typesetter<'a> {
 
 impl<'a> Typesetter<'a> {
     pub fn new(settings: &'a RenderSettings) -> Typesetter<'a> {
-        Typesetter { settings: settings }
+        Typesetter { settings }
     }
 
     pub fn layout(&self, tex: &str) -> Result<Layout, Error> {
-        let mut parse_tree = parse(tex)?;
-        let layout = build_layout(&mut parse_tree, self.settings.layout_settings());
+        let parse_tree = parse(tex)?;
+        let layout = build_layout(&parse_tree, self.settings.layout_settings());
 
         trace!("Parse: {:?}", parse_tree);
         trace!("Layout: {:?}", layout);

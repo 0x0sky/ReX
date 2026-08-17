@@ -17,15 +17,24 @@ pub fn render_to_path<P: AsRef<Path>>(path: P, settings: &RenderSettings, input:
 }
 
 pub fn render_to_file(file: &mut File, settings: &RenderSettings, input: &str) {
-    let s: Vec<u8> = SVGRenderer::new(&settings)
+    let s: Vec<u8> = SVGRenderer::new(settings)
         .render(input)
         .expect("failed to render");
-    file.write(&s).expect("failed to write to file");
+    file.write_all(&s).expect("failed to write to file");
 }
 
 pub fn render_to_string(settings: &RenderSettings, input: &str) -> Result<String, Error> {
-    let s: Vec<u8> = SVGRenderer::new(&settings).render(input)?;
+    let s: Vec<u8> = SVGRenderer::new(settings).render(input)?;
     Ok(String::from_utf8(s).unwrap())
+}
+
+pub fn render_scene_to_string(
+    settings: &RenderSettings,
+    scene: &MathScene,
+) -> Result<String, Error> {
+    let renderer = SVGRenderer::<Vec<u8>>::new(settings);
+    let bytes = renderer.render_scene(scene)?;
+    Ok(String::from_utf8(bytes).unwrap())
 }
 
 #[derive(Clone)]
@@ -35,15 +44,16 @@ pub struct SVGRenderer<'a, W: Write> {
 }
 
 impl<'a, W: Write> SVGRenderer<'a, W> {
-    pub fn new(settings: &RenderSettings) -> SVGRenderer<W> {
+    pub fn new(settings: &'a RenderSettings) -> SVGRenderer<'a, W> {
         SVGRenderer {
-            settings: settings,
+            settings,
             _marker: PhantomData,
         }
     }
 
     fn prepare(&self, out: &mut W, width: FontUnit, height: FontUnit) {
-        let px_width = f64::from(width) / f64::from(UNITS_PER_EM) * self.settings.font_size as f64;
+        let px_width =
+            f64::from(width) / f64::from(UNITS_PER_EM) * self.settings.font_size as f64;
         let px_height =
             f64::from(height) / f64::from(UNITS_PER_EM) * self.settings.font_size as f64;
 
@@ -109,7 +119,7 @@ impl<'a, W: Write> SVGRenderer<'a, W> {
                 position.x,
                 position.y,
                 scale,
-                char::from_u32(symbol).expect("Unabale to decode utf8 code-point!")
+                char::from_u32(symbol).expect("Unable to decode Unicode code point!")
             )
             .expect("Failed to write to buffer!");
         } else {
@@ -118,7 +128,7 @@ impl<'a, W: Write> SVGRenderer<'a, W> {
                 r#"<text transform="translate({}, {})">{}</text>"#,
                 position.x,
                 position.y,
-                char::from_u32(symbol).expect("Unabale to decode utf8 code-point!")
+                char::from_u32(symbol).expect("Unable to decode Unicode code point!")
             )
             .expect("Failed to write to buffer!");
         }
@@ -135,8 +145,12 @@ impl<'a, W: Write> SVGRenderer<'a, W> {
 
     fn begin_color(&self, out: &mut W, color: Color) {
         if color.has_alpha() {
-            writeln!(out, r##"<g fill="#{}{}{}">"##, color.red, color.green, color.blue)
-                .expect("failed to write to buffer!");
+            writeln!(
+                out,
+                r##"<g fill="#{}{}{}">"##,
+                color.red, color.green, color.blue
+            )
+            .expect("failed to write to buffer!");
         } else {
             writeln!(
                 out,
