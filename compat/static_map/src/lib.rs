@@ -1,7 +1,7 @@
-pub use phf::Map;
+pub use phf::{phf_map, Map};
 
 #[doc(hidden)]
-pub use phf::phf_map as __phf_map;
+pub use static_map_macros::static_map_phf as __static_map_phf;
 
 /// Compatibility macro for ReX's generated font tables.
 ///
@@ -12,7 +12,7 @@ pub use phf::phf_map as __phf_map;
 #[macro_export]
 macro_rules! static_map {
     (Default: $default:expr, $($key:expr => $value:expr),* $(,)*) => {{
-        $crate::__phf_map! {
+        $crate::__static_map_phf! {
             $($key => $value),*
         }
     }};
