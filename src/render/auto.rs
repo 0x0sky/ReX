@@ -57,10 +57,8 @@ impl<'a> AutoRenderer<'a> {
                     });
                 }
                 Err(error) => {
-                    return self.svg_fallback(
-                        scene,
-                        FallbackReason::WebGpuUnavailable(error.to_string()),
-                    );
+                    return self
+                        .svg_fallback(scene, FallbackReason::WebGpuUnavailable(error.to_string()));
                 }
             }
         }
