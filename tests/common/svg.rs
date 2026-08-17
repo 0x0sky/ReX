@@ -44,9 +44,9 @@ pub fn write<P: AsRef<Path>>(path: P, eqs: &[Equation]) {
     let out = File::create(path.as_ref()).expect("failed to create html file for SVG diff");
     let mut writer = BufWriter::new(out);
 
-    writer.write(HEADER.as_bytes()).unwrap();
+    writer.write_all(HEADER.as_bytes()).unwrap();
     for eq in eqs {
         write_equation(&mut writer, eq);
     }
-    writer.write(END.as_bytes()).unwrap();
+    writer.write_all(END.as_bytes()).unwrap();
 }

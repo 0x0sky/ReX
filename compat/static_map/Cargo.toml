@@ -1,0 +1,10 @@
+[package]
+name = "static_map"
+version = "0.2.0-rex"
+edition = "2018"
+rust-version = "1.87"
+publish = false
+
+[dependencies]
+phf = "0.11.3"
+static_map_macros = { path = "../static_map_macros" }

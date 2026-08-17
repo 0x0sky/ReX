@@ -10,8 +10,6 @@ extern crate font_types;
 
 #[macro_use]
 extern crate static_map;
-#[macro_use]
-extern crate static_map_macros;
 
 #[macro_use]
 mod macros;
@@ -22,11 +20,12 @@ pub mod dimensions;
 pub mod layout;
 pub mod lexer;
 pub mod parser;
+pub mod scene;
 pub mod render;
 
 mod font;
 mod functions;
 
 pub use render::*;
-pub use font_types::fp;
+pub use font_types::{fp, FontUnit};
 

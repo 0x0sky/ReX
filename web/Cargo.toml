@@ -8,5 +8,5 @@ publish = false
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-rex = { path = ".." }
+rex = { path = "..", default-features = false }
 wasm-bindgen = "0.2"
