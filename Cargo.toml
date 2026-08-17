@@ -15,8 +15,7 @@ webgpu = ["dep:bytemuck", "dep:fontdue", "dep:futures-channel", "dep:wgpu"]
 [dependencies]
 stix2 = { path = "fonts/stix2" }
 font_types = { path = "fonts/types" }
-static_map = "0.1.1"
-static_map_macros = "0.1.1"
+static_map = { path = "compat/static_map" }
 serde_derive = "1.0"
 serde = "1.0"
 env_logger = "0.7"
