@@ -1,4 +1,4 @@
-// Compatibility shim for static_map_macros 0.1.1.
+// Compatibility shim for static_map_macros 0.2.0-beta.
 //
 // Upstream relied on the exact whitespace emitted by TokenStream::to_string()
 // for the derive input. Modern rustc changed that formatting. The map builder
@@ -104,7 +104,7 @@ pub fn static_map_macro(input: TokenStream) -> TokenStream {
 }
 
 fn build_static_map(input: &str) -> quote::Tokens {
-    // Keep the original 0.1.1 payload format and builder semantics intact.
+    // Keep the original 0.2.0-beta payload format and builder semantics intact.
     let mut tokens = input.split('@');
     let default_value = tokens.next().unwrap();
 
