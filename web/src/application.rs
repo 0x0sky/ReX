@@ -106,11 +106,7 @@ impl<R> RenderMath<R>
 where
     R: MathRenderer,
 {
-    pub async fn execute(
-        &self,
-        source: &str,
-        mode: RenderMode,
-    ) -> Result<RenderResult, R::Error> {
+    pub async fn execute(&self, source: &str, mode: RenderMode) -> Result<RenderResult, R::Error> {
         self.renderer.render(source, mode).await
     }
 }

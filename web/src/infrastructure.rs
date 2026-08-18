@@ -1,6 +1,4 @@
-use crate::application::{
-    MathRenderer, RenderFuture, RenderMode, RenderPayload, RenderResult,
-};
+use crate::application::{MathRenderer, RenderFuture, RenderMode, RenderPayload, RenderResult};
 use rex::error::Error as RexError;
 use rex::{
     svg, AutoRenderer, FallbackReason, RenderSettings, RenderedMath, Typesetter, WebGpuError,
@@ -27,13 +25,11 @@ impl RexRenderer {
 
     async fn render_webgpu(&self, source: &str) -> Result<RenderResult, RexRenderError> {
         let scene = Typesetter::new(&self.settings).typeset(source)?;
-        let image = WebGpuRenderer::new(&self.settings).render_scene(&scene).await?;
+        let image = WebGpuRenderer::new(&self.settings)
+            .render_scene(&scene)
+            .await?;
 
-        Ok(RenderResult::webgpu(
-            image.width,
-            image.height,
-            image.rgba,
-        ))
+        Ok(RenderResult::webgpu(image.width, image.height, image.rgba))
     }
 
     async fn render_auto(&self, source: &str) -> Result<RenderResult, RexRenderError> {
@@ -41,11 +37,9 @@ impl RexRenderer {
         let fallback_reason = result.fallback_reason.map(fallback_reason_text);
 
         match result.output {
-            RenderedMath::WebGpu(image) => Ok(RenderResult::webgpu(
-                image.width,
-                image.height,
-                image.rgba,
-            )),
+            RenderedMath::WebGpu(image) => {
+                Ok(RenderResult::webgpu(image.width, image.height, image.rgba))
+            }
             RenderedMath::Svg(svg) => Ok(RenderResult::svg(svg, fallback_reason)),
         }
     }
