@@ -2,6 +2,7 @@ export class DemoController {
   #renderer;
   #view;
   #renderQueued = false;
+  #renderRevision = 0;
 
   constructor({ renderer, view }) {
     this.#renderer = renderer;
@@ -11,9 +12,10 @@ export class DemoController {
   async start() {
     this.#view.setBusy(true);
     this.#view.onSourceChanged(() => this.#scheduleRender());
+    this.#view.onModeChanged(() => this.#scheduleRender());
 
     await this.#renderer.initialize();
-    this.#render();
+    await this.#render();
   }
 
   #scheduleRender() {
@@ -24,15 +26,24 @@ export class DemoController {
     this.#renderQueued = true;
     queueMicrotask(() => {
       this.#renderQueued = false;
-      this.#render();
+      void this.#render();
     });
   }
 
-  #render() {
+  async #render() {
+    const revision = ++this.#renderRevision;
+    this.#view.setBusy(true);
+
     try {
-      const svg = this.#renderer.render(this.#view.source());
-      this.#view.showSvg(svg);
+      const result = await this.#renderer.render(this.#view.source(), this.#view.mode());
+      if (revision === this.#renderRevision) {
+        this.#view.showRender(result);
+      }
     } catch (error) {
+      if (revision !== this.#renderRevision) {
+        return;
+      }
+
       const message = error instanceof Error ? error.message : String(error);
       this.#view.showError(message);
     }

@@ -1,4 +1,4 @@
-export class BrowserSvgParser {
+export class BrowserSvgPresenter {
   #document;
   #createParser;
 
@@ -7,8 +7,8 @@ export class BrowserSvgParser {
     this.#createParser = createParser;
   }
 
-  parse(svgText) {
-    const parsed = this.#createParser().parseFromString(svgText, "image/svg+xml");
+  present(payload) {
+    const parsed = this.#createParser().parseFromString(payload.svg, "image/svg+xml");
     const parserError = parsed.querySelector("parsererror");
 
     if (parserError) {
@@ -19,19 +19,52 @@ export class BrowserSvgParser {
   }
 }
 
+export class BrowserRgbaPresenter {
+  #document;
+
+  constructor({ document }) {
+    this.#document = document;
+  }
+
+  present(payload) {
+    const canvas = this.#document.createElement("canvas");
+    canvas.width = payload.width;
+    canvas.height = payload.height;
+    canvas.setAttribute("aria-label", "ReX WebGPU render");
+
+    const context = canvas.getContext("2d");
+    if (!context) {
+      throw new Error("2D canvas context is unavailable for WebGPU readback presentation.");
+    }
+
+    const image = context.createImageData(payload.width, payload.height);
+    image.data.set(payload.pixels);
+    context.putImageData(image, 0, 0);
+
+    return canvas;
+  }
+}
+
 export class DomDemoView {
   #sourceInput;
   #preview;
   #message;
-  #svgParser;
+  #modeButtons;
+  #presenters;
 
-  constructor({ document, svgParser }) {
+  constructor({ document, presenters }) {
     this.#sourceInput = document.querySelector("[data-source]");
     this.#preview = document.querySelector("[data-preview]");
     this.#message = document.querySelector("[data-message]");
-    this.#svgParser = svgParser;
+    this.#modeButtons = [...document.querySelectorAll("[data-render-mode]")];
+    this.#presenters = presenters;
 
-    if (!this.#sourceInput || !this.#preview || !this.#message) {
+    if (
+      !this.#sourceInput ||
+      !this.#preview ||
+      !this.#message ||
+      this.#modeButtons.length === 0
+    ) {
       throw new Error("Demo DOM contract is incomplete.");
     }
   }
@@ -40,27 +73,68 @@ export class DomDemoView {
     return this.#sourceInput.value;
   }
 
+  mode() {
+    const active = this.#modeButtons.find(
+      (button) => button.getAttribute("aria-pressed") === "true",
+    );
+
+    if (!active) {
+      throw new Error("No render mode is selected.");
+    }
+
+    return active.dataset.renderMode;
+  }
+
   onSourceChanged(listener) {
     this.#sourceInput.addEventListener("input", listener);
   }
 
-  showSvg(svgText) {
-    const svg = this.#svgParser.parse(svgText);
-    this.#preview.replaceChildren(svg);
-    this.#message.textContent = "rendered by ReX · WASM";
+  onModeChanged(listener) {
+    for (const button of this.#modeButtons) {
+      button.addEventListener("click", () => {
+        for (const candidate of this.#modeButtons) {
+          candidate.setAttribute("aria-pressed", String(candidate === button));
+        }
+        listener();
+      });
+    }
+  }
+
+  showRender(result) {
+    const presenter = this.#presenters[result.payload.kind];
+    if (!presenter) {
+      throw new Error(`No presenter for render payload: ${result.payload.kind}`);
+    }
+
+    this.#preview.replaceChildren(presenter.present(result.payload));
+    this.#message.textContent = this.#statusText(result);
     this.#message.dataset.state = "ready";
+    this.#message.dataset.backend = result.backend;
   }
 
   showError(message) {
     this.#preview.replaceChildren();
     this.#message.textContent = message;
     this.#message.dataset.state = "error";
+    delete this.#message.dataset.backend;
   }
 
   setBusy(isBusy) {
     if (isBusy) {
-      this.#message.textContent = "loading ReX…";
+      this.#message.textContent = "rendering…";
       this.#message.dataset.state = "busy";
     }
+  }
+
+  #statusText(result) {
+    if (result.backend === "webgpu") {
+      return "WEBGPU · ReX/WASM";
+    }
+
+    if (result.fallbackReason) {
+      return `SVG FALLBACK · ${result.fallbackReason}`;
+    }
+
+    return "SVG · ReX/WASM";
   }
 }

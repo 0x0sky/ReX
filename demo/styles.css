@@ -22,6 +22,10 @@ textarea {
   font: inherit;
 }
 
+button {
+  cursor: pointer;
+}
+
 .shell {
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
@@ -40,7 +44,8 @@ textarea {
 label,
 .message,
 footer,
-.source-link {
+.source-link,
+.render-mode {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
@@ -100,11 +105,45 @@ h1 {
   border-right: 1px solid #29292f;
 }
 
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 label {
   color: #8d8d96;
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.render-mode {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid #34343b;
+  border-radius: 999px;
+}
+
+.render-mode button {
+  border: 0;
+  border-right: 1px solid #34343b;
+  padding: 7px 10px;
+  background: transparent;
+  color: #777780;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.render-mode button:last-child {
+  border-right: 0;
+}
+
+.render-mode button[aria-pressed="true"] {
+  background: #f2f2f3;
+  color: #111114;
 }
 
 textarea {
@@ -140,7 +179,8 @@ textarea {
   overflow: auto;
 }
 
-.preview svg {
+.preview svg,
+.preview canvas {
   display: block;
   max-width: 100%;
   height: auto;
@@ -150,10 +190,16 @@ textarea {
   position: absolute;
   right: 18px;
   bottom: 14px;
+  max-width: calc(100% - 36px);
   margin: 0;
   color: #707078;
   font-size: 10px;
   letter-spacing: 0.04em;
+  text-align: right;
+}
+
+.message[data-backend="webgpu"] {
+  color: #315b43;
 }
 
 .message[data-state="error"] {
@@ -183,6 +229,11 @@ footer {
   .editor-panel {
     border-right: 0;
     border-bottom: 1px solid #29292f;
+  }
+
+  .editor-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   textarea {

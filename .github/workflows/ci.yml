@@ -75,9 +75,14 @@ jobs:
       - name: Web adapter browser compile
         run: cargo check -p rex-web --target wasm32-unknown-unknown
 
-      - name: JavaScript modules
+      - name: JavaScript syntax
         run: |
           node --check demo/app.js
           node --check demo/controller.js
+          node --check demo/controller.test.js
           node --check demo/renderer.js
+          node --check demo/renderer.test.js
           node --check demo/view.js
+
+      - name: Browser adapter tests
+        run: node --test demo/controller.test.js demo/renderer.test.js
