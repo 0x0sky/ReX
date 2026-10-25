@@ -1,7 +1,9 @@
 export class DemoController {
   #renderer;
   #view;
-  #renderQueued = false;
+  #initialized = false;
+  #rendering = false;
+  #renderPending = false;
   #renderRevision = 0;
 
   constructor({ renderer, view }) {
@@ -11,41 +13,50 @@ export class DemoController {
 
   async start() {
     this.#view.setBusy(true);
-    this.#view.onSourceChanged(() => this.#scheduleRender());
-    this.#view.onModeChanged(() => this.#scheduleRender());
+    this.#view.onSourceChanged(() => void this.#scheduleRender());
+    this.#view.onModeChanged(() => void this.#scheduleRender());
 
     await this.#renderer.initialize();
-    await this.#render();
+    this.#initialized = true;
+    await this.#scheduleRender();
   }
 
   #scheduleRender() {
-    if (this.#renderQueued) {
+    this.#renderRevision += 1;
+    this.#renderPending = true;
+    this.#view.setBusy(true);
+
+    if (!this.#initialized || this.#rendering) {
       return;
     }
 
-    this.#renderQueued = true;
-    queueMicrotask(() => {
-      this.#renderQueued = false;
-      void this.#render();
-    });
+    return this.#drainRenders();
   }
 
-  async #render() {
-    const revision = ++this.#renderRevision;
-    this.#view.setBusy(true);
+  async #drainRenders() {
+    this.#rendering = true;
 
     try {
-      const result = await this.#renderer.render(this.#view.source(), this.#view.mode());
-      if (revision === this.#renderRevision) {
-        this.#view.showRender(result);
-      }
-    } catch (error) {
-      if (revision !== this.#renderRevision) {
-        return;
-      }
+      while (this.#renderPending) {
+        this.#renderPending = false;
+        const revision = this.#renderRevision;
 
-      const message = error instanceof Error ? error.message : String(error);
-      this.#view.showError(message);
+        try {
+          const result = await this.#renderer.render(this.#view.source(), this.#view.mode());
+          if (revision === this.#renderRevision) {
+            this.#view.showRender(result);
+          }
+        } catch (error) {
+          if (revision !== this.#renderRevision) {
+            continue;
+          }
+
+          const message = error instanceof Error ? error.message : String(error);
+          this.#view.showError(message);
+        }
+      }
+    } finally {
+      this.#rendering = false;
     }
   }
 }
