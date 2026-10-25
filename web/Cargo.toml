@@ -8,5 +8,6 @@ publish = false
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-rex = { path = "..", default-features = false }
+rex = { path = "..", default-features = false, features = ["webgpu"] }
 wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"

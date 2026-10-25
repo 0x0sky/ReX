@@ -3,7 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="ReX — mathematics typesetting in the browser with Rust and WebAssembly." />
+    <meta
+      name="description"
+      content="ReX — mathematics typesetting in the browser with Rust, WebAssembly, WebGPU, and SVG."
+    />
     <title>ReX · Mathematics Typesetting</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
@@ -11,7 +14,7 @@
     <main class="shell">
       <header class="header">
         <div>
-          <p class="eyebrow">Rust · WebAssembly · SVG</p>
+          <p class="eyebrow">Rust · WebAssembly · WebGPU · SVG</p>
           <h1>ReX</h1>
           <p class="subtitle">Typesetting mathematics directly in your browser.</p>
         </div>
@@ -20,7 +23,14 @@
 
       <section class="workspace" aria-label="ReX live demo">
         <div class="editor-panel">
-          <label for="source">TeX input</label>
+          <div class="editor-toolbar">
+            <label for="source">TeX input</label>
+            <div class="render-mode" role="group" aria-label="Renderer">
+              <button type="button" data-render-mode="auto" aria-pressed="true">AUTO</button>
+              <button type="button" data-render-mode="webgpu" aria-pressed="false">WEBGPU</button>
+              <button type="button" data-render-mode="svg" aria-pressed="false">SVG</button>
+            </div>
+          </div>
           <textarea id="source" data-source spellcheck="false">\frac{1}{\pi} = \frac{2\sqrt{2}}{9801} \sum_{k=0}^\infty \frac{(4k)!(1103+26390k)}{(k!)^4 396^{4k}}</textarea>
         </div>
 
@@ -31,7 +41,7 @@
       </section>
 
       <footer>
-        ReX core stays renderer-agnostic. The browser is only an adapter.
+        AUTO prefers WebGPU and falls back to SVG. WEBGPU never hides an unavailable GPU behind a fallback.
       </footer>
     </main>
 

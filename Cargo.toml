@@ -10,7 +10,8 @@ rust-version = "1.87"
 
 [workspace]
 members = ["web"]
-resolver = "2"
+# Respect the declared Rust 1.87 MSRV when resolving transitive dependencies.
+resolver = "3"
 
 [features]
 default = ["webgpu"]
